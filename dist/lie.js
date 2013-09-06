@@ -1,7 +1,7 @@
 /*! lie 1.0.1 2013-08-31*/
 /*! (c)2013 Ruben Verborgh & Calvin Metcalf @license MIT https://github.com/calvinmetcalf/lie*/
 (function(){
-	var create = function(tick,exports) {
+	var create = function(tick) {
 		var func = 'function';
 		// Creates a deferred: an object with a promise and corresponding resolve/reject methods
 		function Deferred() {
@@ -106,15 +106,14 @@
 				}
 			});
 		}
-		exports = createDeferred;
 		// Returns a resolved promise
-		exports.resolve = function(value) {
+		createDeferred.resolve = function(value) {
 			var promise = {};
 			promise.then = createHandler(promise, value, true);
 			return promise;
 		};
 		// Returns a rejected promise
-		exports.reject = function(reason) {
+		createDeferred.reject = function(reason) {
 			var promise = {};
 			promise.then = createHandler(promise, reason, false);
 			return promise;
@@ -122,16 +121,21 @@
 		// Returns a deferred
 		
 
-		return exports;
+		return createDeferred;
 	};
 
 	if(typeof define === 'function'){
 		define(function(){
-			return create(typeof setImmediate === 'function'?setImmediate:setTimeout,{});
+			return create(typeof setImmediate === 'function'?setImmediate:setTimeout);
 		});
 	}else if(typeof module === 'undefined' || !('exports' in module)){
-		create(typeof setImmediate === 'function'?setImmediate:setTimeout,typeof global === 'object' && global ? global : this);
+		window.lie = create(typeof setImmediate === 'function'?setImmediate:setTimeout);
+		window.lie.old = window.deferred;
+		window.deferred = window.lie
+		window.lie.noConflict=function(){
+			window.deferred = window.lie.old;
+		}
 	}else{
-		module.exports = create(process.nextTick,{});
+		module.exports = create(process.nextTick);
 	}
 })();
