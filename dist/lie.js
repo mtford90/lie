@@ -201,6 +201,7 @@ require.register("calvinmetcalf-setImmediate/lib/index.js", function(exports, re
 var types = [
     require("./realSetImmediate"),
     require("./nextTick"),
+    require("./mutation"),
     require("./postMessage"),
     require("./messageChannel"),
     require("./stateChange"),
@@ -363,6 +364,33 @@ exports.install = function (t) {
 require.register("calvinmetcalf-setImmediate/lib/global.js", function(exports, require, module){
 module.exports = typeof global === "object" && global ? global : this;
 });
+require.register("calvinmetcalf-setImmediate/lib/mutation.js", function(exports, require, module){
+"use strict";
+//based off rsvp
+//https://github.com/tildeio/rsvp.js/blob/master/lib/rsvp/async.js
+var globe = require("./global");
+
+var MutationObserver = globe.MutationObserver || globe.WebKitMutationObserver;
+
+exports.test = function () {
+    return MutationObserver;
+};
+
+exports.install = function (handle) {
+    var observer = new MutationObserver(handle);
+    var element = globe.document.createElement("div");
+    observer.observe(element, { attributes: true });
+
+    // Chrome Memory Leak: https://bugs.webkit.org/show_bug.cgi?id=93661
+    globe.addEventListener("unload", function () {
+        observer.disconnect();
+        observer = null;
+    }, false);
+    return function () {
+        element.setAttribute("drainQueue", "drainQueue");
+    };
+};
+});
 require.register("lie/lie.js", function(exports, require, module){
 var immediate = require('immediate');
 var func = 'function';
@@ -514,6 +542,7 @@ require.alias("calvinmetcalf-setImmediate/lib/messageChannel.js", "lie/deps/imme
 require.alias("calvinmetcalf-setImmediate/lib/stateChange.js", "lie/deps/immediate/lib/stateChange.js");
 require.alias("calvinmetcalf-setImmediate/lib/timeout.js", "lie/deps/immediate/lib/timeout.js");
 require.alias("calvinmetcalf-setImmediate/lib/global.js", "lie/deps/immediate/lib/global.js");
+require.alias("calvinmetcalf-setImmediate/lib/mutation.js", "lie/deps/immediate/lib/mutation.js");
 require.alias("calvinmetcalf-setImmediate/lib/index.js", "lie/deps/immediate/index.js");
 require.alias("calvinmetcalf-setImmediate/lib/index.js", "immediate/index.js");
 require.alias("calvinmetcalf-setImmediate/lib/index.js", "calvinmetcalf-setImmediate/index.js");
