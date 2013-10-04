@@ -31,6 +31,15 @@ function Promise(resolver) {
         // The actual function signature is
         // .re[ject|solve](sentinel, success, value)
     function resolve(success, value){
+        resolved = function(onFulfilled, onRejected) {
+            var callback = success ? onFulfilled : onRejected;
+            if (typeof callback !== 'function') {
+                return {then:then};
+            }
+            return Promise(function(resolve,reject){
+                immediate(execute,callback,value,resolve,reject);
+           });
+        };
         var action = success ? 'resolve' : 'reject';
         var queued;
         var callback;
@@ -45,8 +54,7 @@ function Promise(resolver) {
                 queued.rejecter(value);
             }
         }
-        // Replace this handler with a simple resolved or rejected handler
-        resolved = createHandler(then, value, success);
+        
     }
     this.then = then;
     function yes(value) {
@@ -70,37 +78,23 @@ function Promise(resolver) {
     }catch(e){
         no(e);
     }
-}
-
-// Creates a fulfilled or rejected .then function
-function createHandler(then, value, success) {
-    return function(onFulfilled, onRejected) {
-        var callback = success ? onFulfilled : onRejected;
-        if (typeof callback !== 'function') {
-            return Promise(function(resolve,reject){
-                then(resolve,reject);
-            });
-        }
-        return Promise(function(resolve,reject){
-            immediate(execute,callback,value,resolve,reject);
-       });
-    };
-}
 
 // Executes the callback with the specified value,
 // resolving or rejecting the deferred
-function execute(callback, value, resolve, reject) {
-        try {
-            var result = callback(value);
-            if (result && typeof result.then === 'function') {
-                result.then(resolve, reject);
+    function execute(callback, value, resolve, reject) {
+            try {
+                var result = callback(value);
+                if (result && typeof result.then === 'function') {
+                    result.then(resolve, reject);
+                }
+                else {
+                    resolve(result);
+                }
             }
-            else {
-                resolve(result);
+            catch (error) {
+                reject(error);
             }
-        }
-        catch (error) {
-            reject(error);
-        }
+    }
 }
+
 module.exports = Promise;
