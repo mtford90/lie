@@ -39,7 +39,10 @@ function Promise(resolver) {
             return Promise(function(resolve,reject){
                 immediate(execute,callback,value,resolve,reject);
            });
-        };
+         };
+         drainQueue(success, value);
+    }
+    function drainQueue(success, value){
         var action = success ? 'resolve' : 'reject';
         var queued;
         var callback;
