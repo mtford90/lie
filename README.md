@@ -4,8 +4,9 @@
        alt="Promises/A+ logo" title="Promises/A+ 1.0 compliant" align="right" />
 </a>
 
-lie is a JavaScript promise/deferred implementation, implementing the [Promises/A+ spec](http://promises-aplus.github.com/promises-spec/), and now in v2 using syntax more inline with
-what is going into es6.
+lie is a JavaScript promise/deferred library, implementing the [Promises/A+ spec](http://promises-aplus.github.com/promises-spec/), and now in v2 using syntax more inline with
+what is going into es6 with the overal goal of implemneting a minimal version of the spec that is ideal for libraries wanting
+to return promises or other wanting to build functional toolbelts with promises.
 
 A fork of [Ruben Verborgh's](https://github.com/RubenVerborgh) library called [promiscuous](https://github.com/RubenVerborgh/promiscuous).
 Which takes advantage of my [immediate library](https://github.com/calvinmetcalf/setImmediate), uses object constructors, and with a name I can actually consistently spell. 
