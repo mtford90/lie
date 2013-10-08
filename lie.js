@@ -4,32 +4,27 @@ function Promise(resolver) {
      if (!(this instanceof Promise)) {
         return new Promise(resolver);
     }
-    var queue = [];
+    var successQueue = [];
+    var failureQueue = [];
     var resolved = false;
-    // The `handler` variable points to the function that will
-    // 1) handle a .then(onFulfilled, onRejected) call
-    // 2) handle a .resolve or .reject call (if not fulfilled)
-    // Before 2), `handler` holds a queue of callbacks.
-    // After 2), `handler` is a simple .then handler.
-    // We use only one function to save memory and complexity.
-     // Case 1) handle a .then(onFulfilled, onRejected) call
     function pending(onFulfilled, onRejected){
         return Promise(function(resolver,rejecter){
-            queue.push({
-                resolve: onFulfilled,
-                reject: onRejected,
-                resolver:resolver,
-                rejecter:rejecter
-            });
+                successQueue.push({
+                    callback:onFulfilled,
+                    resolver:resolver,
+                    rejecter:rejecter
+                });
+                failureQueue.push({
+                    callback:onRejected,
+                    resolver:resolver,
+                    rejecter:rejecter
+                });
         });
     }
     function then(onFulfilled, onRejected) {
         return resolved?resolved(onFulfilled, onRejected):pending(onFulfilled, onRejected);
     }
-    // Case 2) handle a .resolve or .reject call
-        // (`onFulfilled` acts as a sentinel)
-        // The actual function signature is
-        // .re[ject|solve](sentinel, success, value)
+    this.then = then;
     function resolve(success, value){
         resolved = function(onFulfilled, onRejected) {
             var callback = success ? onFulfilled : onRejected;
@@ -39,18 +34,13 @@ function Promise(resolver) {
             return Promise(function(resolve,reject){
                 immediate(execute,callback,value,resolve,reject);
            });
-         };
-         drainQueue(success, value);
-    }
-    function drainQueue(success, value){
-        var action = success ? 'resolve' : 'reject';
+        };
+        var queue = success ? successQueue : failureQueue;
         var queued;
-        var callback;
         for (var i = 0, l = queue.length; i < l; i++) {
             queued = queue[i];
-            callback = queued[action];
-            if (typeof callback === 'function') {
-                immediate(execute,callback, value, queued.resolver, queued.rejecter);
+            if (queued.callback) {
+                immediate(execute,queued.callback, value, queued.resolver, queued.rejecter);
             }else if(success){
                 queued.resolver(value);
             }else{
@@ -59,7 +49,6 @@ function Promise(resolver) {
         }
         
     }
-    this.then = then;
     function yes(value) {
         if (!resolved) {
             resolve(true, value);
